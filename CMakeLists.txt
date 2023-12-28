@@ -16,7 +16,7 @@ set(PROJECT_SOURCES
     mf_3d_read_field.cpp
     mf_3d_get.cpp
     mf_3d_interpolation.cpp
-    mf_3d_python.cpp
+    # mf_3d_python.cpp
 )
 
 add_executable(BTR_Field_3D ${PROJECT_SOURCES})
