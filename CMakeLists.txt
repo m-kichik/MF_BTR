@@ -5,9 +5,7 @@ project(BTR_Field_3D VERSION 0.1)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# find_package(pybind11 REQUIRED)
-
-# pybind11_add_module(mf_3d_python mf_3d_python.cpp)
+add_subdirectory(extern/pybind11)
 
 set(PROJECT_SOURCES
     main.cpp
@@ -16,7 +14,17 @@ set(PROJECT_SOURCES
     mf_3d_read_field.cpp
     mf_3d_get.cpp
     mf_3d_interpolation.cpp
-    # mf_3d_python.cpp
 )
+
+pybind11_add_module(
+    mf_3d
+
+    mf_3d_python.cpp
+    
+    mf_3d.h
+    mf_3d_read_field.cpp
+    mf_3d_get.cpp
+    mf_3d_interpolation.cpp
+    )
 
 add_executable(BTR_Field_3D ${PROJECT_SOURCES})

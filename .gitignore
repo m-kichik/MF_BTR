@@ -1,7 +1,8 @@
 .vscode
+__pycache__
+
 build
 Basic_PMS.txt
 bottlenecks.txt
-mf_3d_python.cpp
-mf_3d.py
-setup.py
+
+mf_3d.cpython-311-x86_64-linux-gnu.so
