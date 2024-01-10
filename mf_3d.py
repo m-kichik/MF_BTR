@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 import numpy as np
 
-import mf_3d
+from build.mf_3d import MagneticField
 
 def py_parse_mf(mf_file:str):
     with open(mf_file, 'r') as file:
@@ -34,9 +34,8 @@ def parse_args():
 if __name__ == '__main__':
     mf_file = parse_args().file
 
-    py_parse_mf(mf_file)
+    # py_parse_mf(mf_file)
 
-    mf = mf_3d.MagneticField(mf_file)
-
+    mf = MagneticField(mf_file)
 
     print(mf.get_field(0.1, 0.25, 0.333))

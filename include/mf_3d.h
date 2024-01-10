@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <cmath>
+// #include <format>
 #include <fstream>
 #include <iterator>
 #include <iostream>
 #include <numeric>
+#include <regex>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -29,7 +31,7 @@ class MagneticField {
 
     private:
         void read_mf(const std::string &file_path);
-        int count_columns(const std::string& line);
+        std::vector<std::string> read_raw(const std::string &file_path);
         Grid define_grid(const int& ax, const std::vector<std::string>& raw_mf);
         void fill_field(const std::vector<std::string>& raw_mf);
 

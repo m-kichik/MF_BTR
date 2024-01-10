@@ -3,28 +3,10 @@
 // TODO: checks for missed values (e.g. one missed value in string)
 
 void MagneticField::read_mf(const std::string &file_path) {
-    // Read file
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-        throw std::invalid_argument("Can't open MF file");
+    std::vector<std::string> mf_raw = this->read_raw(file_path);
+    if (!mf_raw.size()) {
+        throw std::runtime_error("Empty MF");
     }
-
-    // Check that first line contain column headers
-    std::string header;
-    std::getline(file, header);
-
-    int columnsN = this->count_columns(header);
-    if (columnsN % 6 != 0) {
-        throw std::invalid_argument("Incorrect MF file content: 6-col MF format needed.");
-    }
-
-    // Read raw data
-    std::string line;
-    std::vector<std::string> mf_raw;
-    while (file >> line) {
-        mf_raw.push_back(line);
-    }
-    file.close();
 
     this->x_grid = this->define_grid(0, mf_raw);
     this->y_grid = this->define_grid(1, mf_raw);
@@ -33,19 +15,62 @@ void MagneticField::read_mf(const std::string &file_path) {
     this->fill_field(mf_raw);
 };
 
-int MagneticField::count_columns(const std::string &line) {
-    std::istringstream iss(line);
-    std::string token;
-    int count = 0;
-
-    while (iss >> token) {
-        count++;
+std::vector<std::string> MagneticField::read_raw(const std::string &file_path) {
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::invalid_argument("Can't open MF file");
     }
 
-    return count;
+    std::vector<std::string> mf_raw;
+
+    std::string num_pattern = R"([+-]?\d+(\.\d+)?[Ee]?[+\-]?(\d+)?)";
+    std::string mf_pattern = R"(\s*)" +
+                          num_pattern + R"(\s+)" +
+                          num_pattern + R"(\s+)" +
+                          num_pattern + R"(\s+)" +
+                          num_pattern + R"(\s+)" +
+                          num_pattern + R"(\s+)" +
+                          num_pattern + R"(\s*)";
+    std::regex mf_regex_pattern(mf_pattern);
+
+    std::regex empty_str_regex_pattern(R"(\s*)");
+
+    auto reading_mf = false;
+    auto line_idx = 1;
+    std::string line;
+    while (std::getline(file, line)) {
+        auto match = std::regex_match(line, mf_regex_pattern);
+
+        if (!reading_mf && match) {
+            reading_mf = true;
+        }
+
+        if (reading_mf && match) {
+            std::istringstream values(line);
+            std::string value;
+            while (values >> value) {
+                mf_raw.push_back(value);
+            }
+        }
+
+        if (reading_mf && !match) {
+            if (!std::regex_match(line, empty_str_regex_pattern)) {
+                auto exception_msg = "Error in MF file content: line " +
+                                     std::to_string(line_idx) +
+                                     " doesn't satisfy MF 3D format pattern";
+                throw std::invalid_argument(exception_msg);
+            }
+        }
+
+        line_idx++;
+    }
+
+    file.close();
+
+    return mf_raw;
 }
 
-Grid MagneticField::define_grid(const int &ax, const std::vector<std::string>& raw_mf) {
+Grid MagneticField::define_grid(const int &ax, const std::vector<std::string> &raw_mf) {
     std::set<float> points;
     std::vector<float> grid;
     for (auto i = ax; i < raw_mf.size(); i += 6) {
@@ -73,7 +98,7 @@ void MagneticField::fill_field(const std::vector<std::string> &raw_mf) {
             this->y_grid.size,
             std::vector<std::array<double, 3>>(
                 this->z_grid.size,
-                std::array<double, 3> {1e20, 1e20, 1e20})));
+                std::array<double, 3>{1e20, 1e20, 1e20})));
 
     for (auto l = 0; l < raw_mf.size(); l += 6) {
         auto i = std::distance(
@@ -89,7 +114,7 @@ void MagneticField::fill_field(const std::vector<std::string> &raw_mf) {
                 this->y_grid.grid.begin(),
                 this->y_grid.grid.end(),
                 std::stof(raw_mf[l + 1])));
-                
+
         auto k = std::distance(
             this->z_grid.grid.begin(),
             std::find(
@@ -112,8 +137,7 @@ void MagneticField::fill_field(const std::vector<std::string> &raw_mf) {
                                             std::to_string(this->y_grid.grid[j]) + ", " +
                                             std::to_string(this->z_grid.grid[k]);
                     throw std::invalid_argument(
-                        "Some value(s) was/were not set in the coordinate " + coord_str + "."
-                        );
+                        "Some value(s) was/were not set in the coordinate " + coord_str + ".");
                 }
             }
         }

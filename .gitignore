@@ -1,5 +1,6 @@
 .vscode
 __pycache__
+*.coverage
 
 build
 Basic_PMS.txt
