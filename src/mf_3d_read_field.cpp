@@ -58,7 +58,7 @@ std::vector<std::string> MagneticField::read_raw(const std::string &file_path) {
                 auto exception_msg = "Error in MF file content: line " +
                                      std::to_string(line_idx) +
                                      " doesn't satisfy MF 3D format pattern";
-                throw std::invalid_argument(exception_msg);
+                throw std::runtime_error(exception_msg);
             }
         }
 
@@ -94,7 +94,7 @@ Grid MagneticField::define_grid(const int &ax, const std::vector<std::string> &r
 void MagneticField::fill_field(const std::vector<std::string> &raw_mf) {
     this->field.resize(
         this->x_grid.size,
-        std::vector<std::vector<std::array<double, 3>>>(
+        std::vector<std::vector<std::array<double, 3>>> (
             this->y_grid.size,
             std::vector<std::array<double, 3>>(
                 this->z_grid.size,
