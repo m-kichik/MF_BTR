@@ -16,7 +16,7 @@ include_directories(
 )
 
 set(PROJECT_SOURCES
-    main.cpp
+    src/main.cpp
 
     include/mf_3d.h
     src/mf_3d_read_field.cpp
