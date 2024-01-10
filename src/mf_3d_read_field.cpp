@@ -136,7 +136,7 @@ void MagneticField::fill_field(const std::vector<std::string> &raw_mf) {
                     std::string coord_str = std::to_string(this->x_grid.grid[i]) + ", " +
                                             std::to_string(this->y_grid.grid[j]) + ", " +
                                             std::to_string(this->z_grid.grid[k]);
-                    throw std::invalid_argument(
+                    throw std::runtime_error(
                         "Some value(s) was/were not set in the coordinate " + coord_str + ".");
                 }
             }
