@@ -8,4 +8,4 @@ bottlenecks.txt
 
 *.png
 
-mf_3d.cpython-311-x86_64-linux-gnu.so
+mf_3d.py
