@@ -1,7 +1,7 @@
 **Usage**
 - Clone this repo:
 ```bash
-git clone https://github.com/m-kichik/MF_BTR
+git clone --recurse-submodules https://github.com/m-kichik/MF_BTR
 ```
 - Build project:
 ```bash
