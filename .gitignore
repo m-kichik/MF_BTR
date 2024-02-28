@@ -1,11 +1,12 @@
 .vscode
 *__pycache__
 *.coverage
+*.ipynb_checkpoints
 
 build
-Basic_PMS.txt
-bottlenecks.txt
 
 *.png
+*.txt
 
 mf_3d.py
+mf_1d_visual_representations.ipynb

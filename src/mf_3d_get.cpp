@@ -8,7 +8,7 @@ std::array<double, 3> MagneticField::get_field(const float& x, const float& y, c
     return compute_field(x, y, z, x_ids, y_ids, z_ids);
 };
 
-bool MagneticField::is_in_node(const float& point, const float& step, const float& epsilon = 1e-6) {    
+bool MagneticField::is_in_node(const float& point, const float& step, const float& epsilon = 1e-5) {
     return (point / step) - std::floor(point / step) <= epsilon;
 }
 
@@ -22,7 +22,7 @@ std::tuple<int, bool> MagneticField::lower_id_is_same(const Grid& grid, const fl
     }
 
     if (is_in_node(point, grid.step)) {
-        auto idx = (int)((point - grid.min_value) / grid.step);
+        auto idx = std::round((point - grid.min_value) / grid.step);
         return std::tuple<int, bool> {idx, true};
     }
 
@@ -59,8 +59,8 @@ x0 ?= x1 /
 
 std::array<double, 3> MagneticField::compute_field(
     const float& x, const float& y, const float& z,
-    const std::tuple<int, bool>& x_idxs,
-    const std::tuple<int, bool>& y_idxs,
+    const std::tuple<int, bool>& x_idxs,    // idxs is a tuple with lower bound an bool
+    const std::tuple<int, bool>& y_idxs,    // (true if upper bound is same, false else)
     const std::tuple<int, bool>& z_idxs
 ) {
     if (!std::get<1>(x_idxs)) {
@@ -111,7 +111,7 @@ std::array<double, 3> MagneticField::compute_field(
                 return interp_1d(
                     x, this->x_grid.grid[std::get<0>(x_idxs)], this->x_grid.step,
                     this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
-                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs) + 1]
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs)]
                 );
             }
         } 

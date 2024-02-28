@@ -7,7 +7,35 @@ def prepare_test_files_creation(dir_path: str):
 
 
 def prepare_test_files_get_field(dir_path: str):
-    pass
+    with open(os.path.join(dir_path, "constant_cube_field.txt"), "w") as file:
+        file.writelines(
+            [
+                "MF 3D test file with zero cube field\n",
+                "0 0 0 42 13 121\n",
+                "0 0 1 42 13 121\n",
+                "0 1 0 42 13 121\n",
+                "0 1 1 42 13 121\n",
+                "1 0 0 42 13 121\n",
+                "1 0 1 42 13 121\n",
+                "1 1 0 42 13 121\n",
+                "1 1 1 42 13 121\n",
+            ]
+        )
+
+    with open(os.path.join(dir_path, "opposite_vectors_cube.txt"), "w") as file:
+        file.writelines(
+            [
+                "MF 3D test file with zero cube field\n",
+                "0 0 0 -1 -1 -1\n",
+                "0 0 1 -1 -1  1\n",
+                "0 1 0 -1  1 -1\n",
+                "0 1 1 -1  1  1\n",
+                "1 0 0  1 -1 -1\n",
+                "1 0 1  1 -1  1\n",
+                "1 1 0  1  1 -1\n",
+                "1 1 1  1  1  1\n",
+            ]
+        )
 
 
 def prepare_correct_cases(dir_path: str):
