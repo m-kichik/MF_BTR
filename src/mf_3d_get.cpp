@@ -27,7 +27,7 @@ std::tuple<int, bool> MagneticField::lower_id_is_same(const Grid& grid, const fl
     }
 
     auto idx = (int)(std::floor((point - grid.min_value) / grid.step));
-    return std::tuple<int, int> {idx, false};
+    return std::tuple<int, bool> {idx, false};
 }
 
 /*
