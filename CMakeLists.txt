@@ -22,6 +22,8 @@ set(PROJECT_SOURCES
     src/mf_3d_read_field.cpp
     src/mf_3d_get.cpp
     src/mf_3d_interpolation.cpp
+    src/interpolation_matrices.cpp
+    src/interpolation.cpp
 )
 
 pybind11_add_module(
@@ -33,6 +35,8 @@ pybind11_add_module(
     src/mf_3d_read_field.cpp
     src/mf_3d_get.cpp
     src/mf_3d_interpolation.cpp
+    src/interpolation_matrices.cpp
+    src/interpolation.cpp
     )
 
 add_executable(BTR_Field_3D ${PROJECT_SOURCES})

@@ -1,118 +1,303 @@
 #include "mf_3d.h"
 
-std::array<double, 3> interp_1d_linear(
-    const float& x, const float& x0, const float& step,
-    const std::array<double, 3>& f0, const std::array<double, 3>& f1);
-
-std::array<double, 3> interp_1d(
-    const float& x, const float& x0, const float& step,
-    const std::array<double, 3>& f0, const std::array<double, 3>& f1
-) {
-    return interp_1d_linear(x, x0, step, f0, f1);
+bool is_in_node(const float& point, const float& step, const float& epsilon = 1e-5) {
+    return (point / step) - std::floor(point / step) <= epsilon;
 }
 
-std::array<double, 3> interp_2d_linear(
-    const float& x, const float& y, const float& x0, const float& y0,
-    const float& step_x, const float& step_y,
-    const std::array<double, 3>& f00, const std::array<double, 3>& f01,
-    const std::array<double, 3>& f10, const std::array<double, 3>& f11);
-
-std::array<double, 3> interp_2d(
-    const float& x, const float& y, const float& x0, const float& y0,
-    const float& step_x, const float& step_y,
-    const std::array<double, 3>& f00, const std::array<double, 3>& f01,
-    const std::array<double, 3>& f10, const std::array<double, 3>& f11
-) {
-    return interp_2d_linear(x, y, x0, y0, step_x, step_y, f00, f01, f10, f11);
-}
-
-std::array<double, 3> interp_3d_linear(
-    const float& x, const float& y, const float& z,
-    const float& x0, const float& y0, const float& z0,
-    const float& step_x, const float& step_y, const float& step_z,
-    const std::array<double, 3>& f000, const std::array<double, 3>& f001,
-    const std::array<double, 3>& f010, const std::array<double, 3>& f011,
-    const std::array<double, 3>& f100, const std::array<double, 3>& f101,
-    const std::array<double, 3>& f110, const std::array<double, 3>& f111);
-
-std::array<double, 3> interp_3d(
-    const float& x, const float& y, const float& z,
-    const float& x0, const float& y0, const float& z0,
-    const float& step_x, const float& step_y, const float& step_z,
-    const std::array<double, 3>& f000, const std::array<double, 3>& f001,
-    const std::array<double, 3>& f010, const std::array<double, 3>& f011,
-    const std::array<double, 3>& f100, const std::array<double, 3>& f101,
-    const std::array<double, 3>& f110, const std::array<double, 3>& f111
-) {
-    return interp_3d_linear(
-        x, y, z, x0, y0, z0, step_x, step_y, step_z,
-        f000, f001, f010, f011, f100, f101, f110, f111
-    );
-}
-
-std::array<double, 3> interp_1d_linear(
-    const float& x, const float& x0, const float& step,
-    const std::array<double, 3>& f0, const std::array<double, 3>& f1
-) {
-    auto k = (x - x0) / step;
-
-    std::array<double, 3> f;
-
-    for (auto i = 0; i < 3; i++) {
-        f[i] = f0[i] + (f1[i] - f0[i]) * k;
+std::tuple<int, bool> MagneticField::lower_id_is_same(const Grid& grid, const float& point) {
+    if (point <= grid.min_value) {
+        return std::tuple<int, bool> {0, true};
     }
 
-    return f;
-}
-
-std::array<double, 3> interp_2d_linear(
-    const float& x, const float& y, const float& x0, const float& y0,
-    const float& step_x, const float& step_y,
-    const std::array<double, 3>& f00, const std::array<double, 3>& f01,
-    const std::array<double, 3>& f10, const std::array<double, 3>& f11
-) {
-    auto x1 = x0 + step_x;
-    auto y1 = y0 + step_y;
-    auto k = 1 / (step_x * step_y);
-
-    std::array<double, 3> f;
-
-    for (auto i = 0; i < 3; i++) {
-        f[i] = k * (f00[i] * (x1 - x) * (y1 - y) + 
-                    f10[i] * (x - x0) * (y1 - y) +
-                    f01[i] * (x1 - x) * (y - y0) +
-                    f11[i] * (x - x0) * (y - y0));
+    if (point >= grid.max_value) {
+        return std::tuple<int, bool> {grid.size - 1, true};
     }
 
-    return f;
+    if (is_in_node(point, grid.step)) {
+        auto idx = std::round((point - grid.min_value) / grid.step);
+        return std::tuple<int, bool> {idx, true};
+    }
+
+    auto idx = (int)(std::floor((point - grid.min_value) / grid.step));
+    return std::tuple<int, int> {idx, false};
 }
 
-std::array<double, 3> interp_3d_linear(
+Grid make_new_grid(const Grid &old_grid, const std::array<int, 3> &decomp_coeffs, const int &idx) {
+    uint new_size = (old_grid.size - 1) * decomp_coeffs[idx] + 1;
+    float new_step = old_grid.step / decomp_coeffs[idx];
+    std::vector<float> new_grid;
+    for (auto i = 0; i < new_size; ++i) {
+        auto iidx = i / decomp_coeffs[idx];
+        auto offset = (i % decomp_coeffs[idx]) * new_step;
+        new_grid.push_back(old_grid.grid[iidx] + offset);
+    }
+    return Grid{
+        new_size,
+        new_step,
+        old_grid.min_value,
+        old_grid.max_value,
+        new_grid
+    };
+}
+
+/*
+Interpolation tree:
+Upper: YES, lower: NO:
+                              field[x][y][z]
+                    z0 ?= z1 /
+                             \
+                              1d-interpolation with z
+          y0 ?= y1 /
+                   \
+                              1d-interpolation with y
+                    z0 ?= z1 /
+                             \
+                              2d-interpolation with y-z
+x0 ?= x1 /
+         \
+                              1d-interpolation with x
+                    z0 ?= z1 /
+                             \
+                              2d-interpolation with x-z
+          y0 ?= y1 /
+                   \
+                              2d-interpolation with x-y
+                    z0 ?= z1 /
+                             \
+                              3d-interpolation with x-y-z
+*/
+
+std::array<double, 3> MagneticField::compute_field(
     const float& x, const float& y, const float& z,
-    const float& x0, const float& y0, const float& z0,
-    const float& step_x, const float& step_y, const float& step_z,
-    const std::array<double, 3>& f000, const std::array<double, 3>& f001,
-    const std::array<double, 3>& f010, const std::array<double, 3>& f011,
-    const std::array<double, 3>& f100, const std::array<double, 3>& f101,
-    const std::array<double, 3>& f110, const std::array<double, 3>& f111
+    const std::tuple<int, bool>& x_idxs,    // idxs is a tuple with lower bound an bool
+    const std::tuple<int, bool>& y_idxs,    // (true if upper bound is same, false else)
+    const std::tuple<int, bool>& z_idxs
 ) {
-    auto x1 = x0 + step_x;
-    auto y1 = y0 + step_y;
-    auto z1 = z0 + step_z;
-    auto k = 1 / (step_x * step_y * step_z);
+    if (!std::get<1>(x_idxs)) {
+        if (!std::get<1>(y_idxs)) {
+            if (!std::get<1>(z_idxs)) {
+                // 3d with x-y-z
+                return interp_3d(
+                    x, y, z,
+                    this->x_grid.grid[std::get<0>(x_idxs)],
+                    this->y_grid.grid[std::get<0>(y_idxs)],
+                    this->z_grid.grid[std::get<0>(z_idxs)],
+                    this->x_grid.step, this->y_grid.step, this->z_grid.step,
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs) + 1],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs) + 1],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs) + 1],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs) + 1]
+                );
+            } else {
+                // 2d with x-y
+                return interp_2d(
+                    x, y,
+                    this->x_grid.grid[std::get<0>(x_idxs)], this->y_grid.grid[std::get<0>(y_idxs)],
+                    this->x_grid.step, this->y_grid.step,
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs)]
+                );
+            }
+        } else {
+            if (!std::get<1>(z_idxs)) {
+                // 2d with x-z
+                return interp_2d(
+                    x, z,
+                    this->x_grid.grid[std::get<0>(x_idxs)], this->z_grid.grid[std::get<0>(z_idxs)],
+                    this->x_grid.step, this->z_grid.step,
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs) + 1],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs) + 1]
+                );
+            } else {
+                // 1d with x
+                return interp_1d(
+                    x, this->x_grid.grid[std::get<0>(x_idxs)], this->x_grid.step,
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs) + 1][std::get<0>(y_idxs)][std::get<0>(z_idxs)]
+                );
+            }
+        } 
+    } else {
+        if (!std::get<1>(y_idxs)) {
+            if (!std::get<1>(z_idxs)) {
+                // 2d with y-z
+                return interp_2d(
+                    y, z,
+                    this->y_grid.grid[std::get<0>(y_idxs)], this->z_grid.grid[std::get<0>(z_idxs)],
+                    this->y_grid.step, this->z_grid.step,
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs) + 1],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs) + 1]
+                );
+            } else {
+                // 1d with y
+                return interp_1d(
+                    y, this->y_grid.grid[std::get<0>(y_idxs)], this->y_grid.step,
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs) + 1][std::get<0>(z_idxs)]
+                );
+            }
+        } else {
+            if (!std::get<1>(z_idxs)) {
+                // 1d with z
+                return interp_1d(
+                    z, this->z_grid.grid[std::get<0>(z_idxs)], this->z_grid.step,
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)],
+                    this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs) + 1]
+                );
+            } else {
+                return this->field[std::get<0>(x_idxs)][std::get<0>(y_idxs)][std::get<0>(z_idxs)];
+            }
+        }
+    }
+}
 
-    std::array<double, 3> f;
+/*
+Interpolation tree:
+Upper: YES, lower: NO:
+                                    field[node]
+                        z in node? /
+                                   \
+                                    cubic interpolation with z
+            y in node? /
+                       \
+                                    cubic interpolation with y
+                        z in node? /
+                                   \
+                                    bicubic interpolation with y-z
+x in node? /
+           \
+                                    cubic interpolation with x
+                        z in node? /
+                                   \
+                                    bicubic interpolation with x-z
+            y in node? /
+                       \
+                                    bicubic interpolation with x-y
+                        z in node? /
+                                   \
+                                   my_function interpolation with x-y-z
+*/
 
-    for (auto i = 0; i < 3; i++) {
-        f[i] = k * (f000[i] * (x1 - x) *  (y1 - y) * (z1 - z) +
-                    f001[i] * (x1 - x) *  (y1 - y) * (z - z0) +
-                    f010[i] * (x1 - x) *  (y - y0) * (z1 - z) +
-                    f011[i] * (x1 - x) *  (y - y0) * (z - z0) +
-                    f100[i] * (x - x0) *  (y1 - y) * (z1 - z) +
-                    f101[i] * (x - x0) *  (y1 - y) * (z - z0) +
-                    f110[i] * (x - x0) *  (y - y0) * (z1 - z) +
-                    f111[i] * (x - x0) *  (y - y0) * (z - z0));
+void MagneticField::compute_interpolated_matrix() {
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> extended_field;
+
+    Grid new_x_grid = make_new_grid(this->x_grid, this->decomp_coeffs, 0);
+    Grid new_y_grid = make_new_grid(this->y_grid, this->decomp_coeffs, 1);
+    Grid new_z_grid = make_new_grid(this->z_grid, this->decomp_coeffs, 2);
+
+    extended_field.resize(
+        new_x_grid.size,
+        std::vector<std::vector<std::array<double, 3>>> (
+            new_y_grid.size,
+            std::vector<std::array<double, 3>>(
+                new_z_grid.size,
+                std::array<double, 3>{1e20, 1e20, 1e20})));
+
+    for (auto i = 0; i < new_x_grid.size; i++) {
+        for (auto j = 0; j < new_y_grid.size; j++) {
+            for (auto k = 0; k < new_z_grid.size; k++) {
+                if (i % decomp_coeffs[0] == 0) {
+                    if (j % decomp_coeffs[1] == 0) {
+                        if (k % decomp_coeffs[2] == 0) {
+                            // field in node
+                            extended_field[i][j][k] = this->field[i / decomp_coeffs[0]][j / decomp_coeffs[1]][k / decomp_coeffs[2]];
+                        } else {
+                            // cubic interpolation with z
+                            extended_field[i][j][k] = cubic(
+                                new_x_grid.grid[i], new_y_grid.grid[j], new_z_grid.grid[k],
+                                i, j, k,
+                                this->x_grid, this->y_grid, this->z_grid,
+                                this->decomp_coeffs,
+                                2,
+                                this->field
+                            );
+                        }
+                    } else {
+                        if (k % decomp_coeffs[2] == 0) {
+                            // cubic interpolation with y
+                            extended_field[i][j][k] = cubic(
+                                new_x_grid.grid[i], new_y_grid.grid[j], new_z_grid.grid[k],
+                                i, j, k,
+                                this->x_grid, this->y_grid, this->z_grid,
+                                this->decomp_coeffs,
+                                1,
+                                this->field
+                            );
+                        } else {
+                            // bicubic interpolation with y-z
+                            extended_field[i][j][k] = bicubic(
+                                new_x_grid.grid[i], new_y_grid.grid[j], new_z_grid.grid[k],
+                                i, j, k,
+                                this->x_grid, this->y_grid, this->z_grid,
+                                this->decomp_coeffs,
+                                {0, 1, 1},
+                                this->field
+                            );
+                        }
+                    }
+                } else {
+                    if (j % decomp_coeffs[1] == 0) {
+                        if (k % decomp_coeffs[2] == 0) {
+                            // cubic interpolation with x
+                            extended_field[i][j][k] = cubic(
+                                new_x_grid.grid[i], new_y_grid.grid[j], new_z_grid.grid[k],
+                                i, j, k,
+                                this->x_grid, this->y_grid, this->z_grid,
+                                this->decomp_coeffs,
+                                0,
+                                this->field
+                            );
+                        } else {
+                            // bicubic interpolation with x-z
+                            extended_field[i][j][k] = bicubic(
+                                new_x_grid.grid[i], new_y_grid.grid[j], new_z_grid.grid[k],
+                                i, j, k,
+                                this->x_grid, this->y_grid, this->z_grid,
+                                this->decomp_coeffs,
+                                {1, 0, 1},
+                                this->field
+                            );
+                        }
+                    } else {
+                        if (k % decomp_coeffs[2] == 0) {
+                            // bicubic interpolation with x-y
+                            extended_field[i][j][k] = bicubic(
+                                new_x_grid.grid[i], new_y_grid.grid[j], new_z_grid.grid[k],
+                                i, j, k,
+                                this->x_grid, this->y_grid, this->z_grid,
+                                this->decomp_coeffs,
+                                {1, 1, 0},
+                                this->field
+                            );
+                        } else {
+                            // tricubic interpolation with x-y-z
+                            extended_field[i][j][k] = tricubic(
+                                new_x_grid.grid[i], new_y_grid.grid[j], new_z_grid.grid[k],
+                                i, j, k,
+                                this->x_grid, this->y_grid, this->z_grid,
+                                this->decomp_coeffs,
+                                this->field
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    return f;
+    this->x_grid = new_x_grid;
+    this->y_grid = new_y_grid;
+    this->z_grid = new_z_grid;
+
+    this->field = extended_field;
 }
