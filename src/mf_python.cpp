@@ -2,7 +2,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 
-#include "mf_3d.h"
+#include "MF.h"
 
 PYBIND11_MODULE(mf_3d, m) {
     pybind11::class_<MagneticField>(m, "MagneticField")

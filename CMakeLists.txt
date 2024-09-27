@@ -18,24 +18,24 @@ include_directories(
 set(PROJECT_SOURCES
     src/main.cpp
 
-    include/mf_3d.h
-    src/mf_3d_read_field.cpp
-    src/mf_3d_get.cpp
-    src/mf_3d_interpolation.cpp
-    src/interpolation_matrices.cpp
+    include/MF.h
+    include/Interpolation.h
+
+    src/read_field.cpp
+    src/get_field.cpp
     src/interpolation.cpp
 )
 
 pybind11_add_module(
     mf_3d
 
-    src/mf_3d_python.cpp
+    src/mf_python.cpp
     
-    include/mf_3d.h
-    src/mf_3d_read_field.cpp
-    src/mf_3d_get.cpp
-    src/mf_3d_interpolation.cpp
-    src/interpolation_matrices.cpp
+    include/MF.h
+    include/Interpolation.h
+
+    src/read_field.cpp
+    src/get_field.cpp
     src/interpolation.cpp
     )
 
