@@ -18,12 +18,15 @@ include_directories(
 set(PROJECT_SOURCES
     src/main.cpp
 
-    include/MF.h
-    include/Interpolation.h
+    include/MF.hpp
+    include/Interpolation.hpp
 
     src/read_field.cpp
     src/get_field.cpp
+    src/interpolate_field.cpp
     src/interpolation.cpp
+    src/interpolation_constants.cpp
+    # src/interpolation_matrixes.cpp
 )
 
 pybind11_add_module(
@@ -31,12 +34,15 @@ pybind11_add_module(
 
     src/mf_python.cpp
     
-    include/MF.h
-    include/Interpolation.h
+    include/MF.hpp
+    include/Interpolation.hpp
 
     src/read_field.cpp
     src/get_field.cpp
+    src/interpolate_field.cpp
     src/interpolation.cpp
+    src/interpolation_constants.cpp
+    # src/interpolation_matrixes.cpp
     )
 
 add_executable(BTR_Field_3D ${PROJECT_SOURCES})

@@ -1,4 +1,4 @@
-#include <vector>
+#include <array>
 
 std::array<double, 3> linear_1d(
     std::array<double, 3> f0, 
@@ -27,3 +27,10 @@ std::array<double, 3> linear_3d(
     double delta1,
     double delta2
 );
+
+// to avoid circular import
+extern const std::array<std::array<int, 4>, 4> cubic_B;
+
+extern const std::array<std::array<int, 16>, 16> bicubic_B;
+
+extern const std::array<std::array<int, 64>, 64> tricubic_B;

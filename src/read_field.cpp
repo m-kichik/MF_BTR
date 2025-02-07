@@ -1,4 +1,4 @@
-#include "MF.h"
+#include "MF.hpp"
 
 void MagneticField::read_mf(const std::string &file_path) {
     auto [raw_mf, corrupted_lines] = this->read_raw(file_path);

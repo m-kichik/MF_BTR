@@ -1,10 +1,11 @@
-#include "MF.h"
-#include "Interpolation.h"
+#include "MF.hpp"
+#include "Interpolation.hpp"
 
 /**
  * @param x - x coordinate in absolute values
  * @param grid - corresponding grid
- * @return x_idx_left, x_idx_right, x_delta - left and right biundaries and delta between x and left boundary,
+ * @return x_idx_left, x_idx_right, x_delta - left and right boundaries 
+ * and delta between x and left boundary,
  * scaled between 0 and 1 (for interpolation)
  */
 std::tuple<uint, uint, double> find_nodes(const double &x, const Grid &grid) {
@@ -30,6 +31,12 @@ std::tuple<uint, uint, double> find_nodes(const double &x, const Grid &grid) {
     }
 }
 
+/**
+ * Returns the magnetic field at the given coordinates.
+ *
+ * @param coords The coordinates of the point.
+ * @return The magnetic field at the given coordinates.
+ */
 std::array<double, 3> MagneticField::get_field(const std::tuple<double, double, double> &coords) {
     auto [x, y, z] = coords;
 

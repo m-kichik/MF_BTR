@@ -1,5 +1,14 @@
-#include "Interpolation.h"
+#include "Interpolation.hpp"
 
+
+/**
+* Performs linear interpolation in 1D.
+*
+* @param f0 The value at the left endpoint.
+* @param f1 The value at the right endpoint.
+* @param delta The distance from the left endpoint.
+* @return The interpolated value.
+*/
 std::array<double, 3> linear_1d(
     std::array<double, 3> f0,
     std::array<double, 3> f1,
@@ -12,6 +21,18 @@ std::array<double, 3> linear_1d(
     return f;
 }
 
+
+/**
+* Performs linear interpolation in 2D.
+*
+* @param f00 The value at the bottom-left corner.
+* @param f01 The value at the bottom-right corner.
+* @param f10 The value at the top-left corner.
+* @param f11 The value at the top-right corner.
+* @param delta0 The distance from the bottom-left corner.
+* @param delta1 The distance from the top-left corner.
+* @return The interpolated value.
+*/
 std::array<double, 3> linear_2d(
     std::array<double, 3> f00,
     std::array<double, 3> f01,
@@ -27,6 +48,23 @@ std::array<double, 3> linear_2d(
         return f;
 };
 
+
+/**
+* Performs linear interpolation in 3D.
+*
+* @param f000 The value at the bottom-left-front corner.
+* @param f001 The value at the bottom-left-back corner.
+* @param f010 The value at the bottom-right-front corner.
+* @param f011 The value at the bottom-right-back corner.
+* @param f100 The value at the top-left-front corner.
+* @param f101 The value at the top-left-back corner.
+* @param f110 The value at the top-right-front corner.
+* @param f111 The value at the top-right-back corner.
+* @param delta0 The distance from the bottom-left-front corner.
+* @param delta1 The distance from the bottom-left-back corner.
+* @param delta2 The distance from the top-left-front corner.
+* @return The interpolated value.
+*/
 std::array<double, 3> linear_3d(
     std::array<double, 3> f000,
     std::array<double, 3> f001,
