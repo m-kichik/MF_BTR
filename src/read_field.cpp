@@ -70,6 +70,7 @@ MagneticField::raw_mf_and_corrupted_lines MagneticField::read_raw(const std::str
                           num_pattern + R"(\s+)" +
                           num_pattern + R"(\s*)";
     std::regex mf_regex_pattern(mf_pattern);
+    std::regex empty_string_pattern("");
 
     auto line_counter = 0u;
     auto read_mf = false;
@@ -93,7 +94,8 @@ MagneticField::raw_mf_and_corrupted_lines MagneticField::read_raw(const std::str
                 raw_mf.push_back(point);
             }
         } else {
-            if (read_mf) {
+            auto empty_match = std::regex_match(line, empty_string_pattern);
+            if (read_mf && !empty_match) {
                 corrupted_lines.push_back(line_counter);
             }
         }
@@ -187,7 +189,7 @@ std::vector<std::vector<double>> MagneticField::fill_field(std::vector<std::vect
     auto max_point = *std::max_element(raw_mf.begin(), raw_mf.end(), raw_mf_max);
     auto big_value = (
         std::abs(max_point[3]) + std::abs(max_point[4]) + std::abs(max_point[5])
-        ) * 1000;
+        ) * 1000 + 1000;
 
     // Resize field matrix
     this->field.resize(this->x_grid.size);

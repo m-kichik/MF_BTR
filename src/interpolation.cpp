@@ -94,7 +94,7 @@ std::array<double, 3> linear_3d(
     std::array<double, 3> f1;
 
     for (auto i = 0u; i < 3; i++) {
-        f0[i] = (1 - delta1) * f00[i] + delta1 * f001[i];
+        f0[i] = (1 - delta1) * f00[i] + delta1 * f10[i];
         f1[i] = (1 - delta1) * f01[i] + delta1 * f11[i];
     }
 

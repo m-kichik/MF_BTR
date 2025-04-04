@@ -25,19 +25,19 @@ struct Grid {
     std::vector<double> grid;
 };
 
-struct Derivatives {
-    std::array<double, 3> f;
+// struct Derivatives {
+//     std::array<double, 3> f;
 
-    std::array<double, 3> dfdx;
-    std::array<double, 3> dfdy;
-    std::array<double, 3> dfdz;
+//     std::array<double, 3> dfdx;
+//     std::array<double, 3> dfdy;
+//     std::array<double, 3> dfdz;
     
-    std::array<double, 3> d2fdxdy;
-    std::array<double, 3> d2fdxdz;
-    std::array<double, 3> d2fdydz;
+//     std::array<double, 3> d2fdxdy;
+//     std::array<double, 3> d2fdxdz;
+//     std::array<double, 3> d2fdydz;
 
-    std::array<double, 3> d3fdxdydz;
-};
+//     std::array<double, 3> d3fdxdydz;
+// };
 
 
 class MagneticField {
