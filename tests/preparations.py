@@ -43,7 +43,7 @@ def prepare_correct_cases(dir_path: str):
         file.writelines(
             [
                 "MF 3D test file with one line field\n",
-                "0 0 0 0 0 0\n",
+                "0 0 0 1 1 1\n",
             ]
         )
 
