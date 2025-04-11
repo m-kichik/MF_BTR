@@ -1,4 +1,4 @@
-#include "Interpolation.hpp"
+#include "interpolation/Interpolation.hpp"
 
 
 /**

@@ -1,4 +1,4 @@
-#include "Interpolation.hpp"
+#include "interpolation/Interpolation.hpp"
 
 const std::array<std::array<int, 4>, 4> cubic_B {
      1,  0,  0,  0,

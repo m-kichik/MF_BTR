@@ -1,48 +1,71 @@
-cmake_minimum_required(VERSION 3.5)
-
+cmake_minimum_required(VERSION 3.15)
 project(BTR_Field_3D VERSION 0.1)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+# Pybind11 integration
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
 add_subdirectory(extern/pybind11)
 
-# set(LIBRARY_NAME
-#     MF
-# )
+# --------------------------------------------------
+# Library: Interpolation
+# --------------------------------------------------
+add_library(Interpolation
+  src/interpolation/interpolation.cpp
+  src/interpolation/interpolation_constants.cpp
+)
 
-include_directories(
+target_include_directories(Interpolation
+  PUBLIC 
     include
+  PRIVATE
+    src/interpolation
 )
 
-set(PROJECT_SOURCES
-    src/main.cpp
-
-    include/MF.hpp
-    include/Interpolation.hpp
-
-    src/read_field.cpp
-    src/get_field.cpp
-    src/interpolate_field.cpp
-    src/interpolation.cpp
-    src/interpolation_constants.cpp
-    # src/interpolation_matrixes.cpp
+# --------------------------------------------------
+# Library: MF
+# --------------------------------------------------
+add_library(MF
+  src/mf/read_field.cpp
+  src/mf/get_field.cpp
+  src/mf/interpolate_field.cpp
 )
 
-pybind11_add_module(
-    mf_3d
+target_include_directories(MF
+  PUBLIC 
+    include
+  PRIVATE
+    src/mf
+)
 
-    src/mf_python.cpp
-    
-    include/MF.hpp
-    include/Interpolation.hpp
+target_link_libraries(MF
+  PUBLIC 
+    Interpolation
+)
 
-    src/read_field.cpp
-    src/get_field.cpp
-    src/interpolate_field.cpp
-    src/interpolation.cpp
-    src/interpolation_constants.cpp
-    # src/interpolation_matrixes.cpp
-    )
+# --------------------------------------------------
+# Python Bindings
+# --------------------------------------------------
+pybind11_add_module(mf_3d
+  python/mf_python.cpp
+)
 
-add_executable(BTR_Field_3D ${PROJECT_SOURCES})
+target_link_libraries(mf_3d
+  PRIVATE
+    MF
+    Interpolation
+)
+
+# --------------------------------------------------
+# Main Executable
+# --------------------------------------------------
+add_executable(BTR_Field_3D
+  src/main.cpp
+)
+
+target_link_libraries(BTR_Field_3D
+  PRIVATE
+    MF
+    Interpolation
+)

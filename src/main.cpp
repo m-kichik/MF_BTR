@@ -1,7 +1,8 @@
 #include <cmath>
 #include <ctime>
+#include <iostream>
 
-#include "MF.hpp"
+#include "mf/MF.hpp"
 
 int main(int argc, char *argv[]) {
     std::time_t start = std::time(nullptr);

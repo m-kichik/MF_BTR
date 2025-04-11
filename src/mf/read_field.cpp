@@ -1,4 +1,10 @@
-#include "MF.hpp"
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <regex>
+#include <set>
+
+#include "mf/MF.hpp"
 
 void MagneticField::read_mf(const std::string &file_path) {
     auto [raw_mf, corrupted_lines] = this->read_raw(file_path);
@@ -22,17 +28,17 @@ void MagneticField::read_mf(const std::string &file_path) {
     if (! x_grid_ok) {
         std::cerr << 
         "Warning: X grid has non-constant steps. A part lying between " << 
-        this->x_grid.min << " and " << this->x_grid.max << " was parsed." << std::endl;
+        this->x_grid_.min << " and " << this->x_grid_.max << " was parsed." << std::endl;
     }
     if (! y_grid_ok) {
         std::cerr << 
         "Warning: Y grid has non-constant steps. A part lying between " << 
-        this->y_grid.min << " and " << this->y_grid.max << " was parsed." << std::endl;
+        this->y_grid_.min << " and " << this->y_grid_.max << " was parsed." << std::endl;
     }
     if (! z_grid_ok) {
         std::cerr << 
         "Warning: Z grid has non-constant steps. A part lying between " << 
-        this->z_grid.min << " and " << this->z_grid.max << " was parsed." << std::endl;
+        this->z_grid_.min << " and " << this->z_grid_.max << " was parsed." << std::endl;
     }
 
     auto missed_points = this->fill_field(raw_mf);
@@ -52,7 +58,7 @@ void MagneticField::read_mf(const std::string &file_path) {
     }
 }
 
-MagneticField::raw_mf_and_corrupted_lines MagneticField::read_raw(const std::string &file_path) {
+RawMFData MagneticField::read_raw(const std::string &file_path) {
     std::ifstream file(file_path);
     if (!file.is_open()) {
         throw std::runtime_error("Can't open MF file");
@@ -103,7 +109,7 @@ MagneticField::raw_mf_and_corrupted_lines MagneticField::read_raw(const std::str
         line_counter += 1;
     }
 
-    return std::make_tuple(raw_mf, corrupted_lines);
+    return RawMFData(raw_mf, corrupted_lines);
 }
 
 std::tuple<bool, std::vector<double>> check_constant_step(std::vector<double> grid) {
@@ -144,35 +150,35 @@ std::tuple<bool, bool, bool> MagneticField::define_grid(std::vector<std::vector<
     auto [y_grid_ok, verified_y_grid_values] = check_constant_step(y_grid_values);
     auto [z_grid_ok, verified_z_grid_values] = check_constant_step(z_grid_values);
 
-    this->x_grid.min = verified_x_grid_values.front();
-    this->x_grid.max = verified_x_grid_values.back();
+    this->x_grid_.min = verified_x_grid_values.front();
+    this->x_grid_.max = verified_x_grid_values.back();
     if (verified_x_grid_values.size() > 1) {
-        this->x_grid.step = verified_x_grid_values[1] - verified_x_grid_values[0];
+        this->x_grid_.step = verified_x_grid_values[1] - verified_x_grid_values[0];
     } else {
-        this->x_grid.step = 0;
+        this->x_grid_.step = 0;
     }
-    this->x_grid.grid = verified_x_grid_values;
-    this->x_grid.size = verified_x_grid_values.size();
+    this->x_grid_.grid = verified_x_grid_values;
+    this->x_grid_.size = verified_x_grid_values.size();
 
-    this->y_grid.min = verified_y_grid_values.front();
-    this->y_grid.max = verified_y_grid_values.back();
+    this->y_grid_.min = verified_y_grid_values.front();
+    this->y_grid_.max = verified_y_grid_values.back();
     if (verified_y_grid_values.size() > 1) {
-        this->y_grid.step = verified_y_grid_values[1] - verified_y_grid_values[0];
+        this->y_grid_.step = verified_y_grid_values[1] - verified_y_grid_values[0];
     } else {
-        this->y_grid.step = 0;
+        this->y_grid_.step = 0;
     }
-    this->y_grid.grid = verified_y_grid_values;
-    this->y_grid.size = verified_y_grid_values.size();
+    this->y_grid_.grid = verified_y_grid_values;
+    this->y_grid_.size = verified_y_grid_values.size();
 
-    this->z_grid.min = verified_z_grid_values.front();
-    this->z_grid.max = verified_z_grid_values.back();
+    this->z_grid_.min = verified_z_grid_values.front();
+    this->z_grid_.max = verified_z_grid_values.back();
     if (verified_z_grid_values.size() > 1) {
-        this->z_grid.step = verified_z_grid_values[1] - verified_z_grid_values[0];
+        this->z_grid_.step = verified_z_grid_values[1] - verified_z_grid_values[0];
     } else {
-        this->z_grid.step = 0;
+        this->z_grid_.step = 0;
     }
-    this->z_grid.grid = verified_z_grid_values;
-    this->z_grid.size = verified_z_grid_values.size();
+    this->z_grid_.grid = verified_z_grid_values;
+    this->z_grid_.size = verified_z_grid_values.size();
 
     return std::make_tuple(x_grid_ok, y_grid_ok, z_grid_ok);
 }
@@ -192,11 +198,11 @@ std::vector<std::vector<double>> MagneticField::fill_field(std::vector<std::vect
         ) * 1000 + 1000;
 
     // Resize field matrix
-    this->field.resize(this->x_grid.size);
-    for (auto &row: this->field) {
-        row.resize(this->y_grid.size);
+    this->field_.resize(this->x_grid_.size);
+    for (auto &row: this->field_) {
+        row.resize(this->y_grid_.size);
         for (auto &col: row) {
-            col.resize(this->z_grid.size);
+            col.resize(this->z_grid_.size);
             for (auto &point: col) {
                 point = std::array<double, 3>{big_value, big_value, big_value};
             }
@@ -210,30 +216,30 @@ std::vector<std::vector<double>> MagneticField::fill_field(std::vector<std::vect
         auto z_coord = point[2];
 
         if (
-            ((this->x_grid.min <= x_coord) && (x_coord <= this->x_grid.max)) 
-            && ((this->y_grid.min <= y_coord) && (y_coord <= this->y_grid.max)) 
-            && ((this->z_grid.min <= z_coord) && (z_coord <= this->z_grid.max))
+            ((this->x_grid_.min <= x_coord) && (x_coord <= this->x_grid_.max)) 
+            && ((this->y_grid_.min <= y_coord) && (y_coord <= this->y_grid_.max)) 
+            && ((this->z_grid_.min <= z_coord) && (z_coord <= this->z_grid_.max))
             ) {
-            auto x_index = std::round((x_coord - this->x_grid.min) / this->x_grid.step);
-            auto y_index = std::round((y_coord - this->y_grid.min) / this->y_grid.step);
-            auto z_index = std::round((z_coord - this->z_grid.min) / this->z_grid.step);
+            auto x_index = std::round((x_coord - this->x_grid_.min) / this->x_grid_.step);
+            auto y_index = std::round((y_coord - this->y_grid_.min) / this->y_grid_.step);
+            auto z_index = std::round((z_coord - this->z_grid_.min) / this->z_grid_.step);
 
-            this->field[x_index][y_index][z_index] = {point[3], point[4], point[5]};
+            this->field_[x_index][y_index][z_index] = {point[3], point[4], point[5]};
         }
     }
 
     // Check for missings in field matrix and fill them with zeros
     std::vector<std::vector<double>> missed_points;
-    for (auto i = 0; i < this->x_grid.size; i++) {
-        for (auto j = 0; j < this->y_grid.size; j++) {
-            for (auto k = 0; k < this->z_grid.size; k++) {
-                if (this->field[i][j][k][0] + this->field[i][j][k][1] + this->field[i][j][k][2] >= big_value) {
-                    auto x_coord = (i * this->x_grid.step) + this->x_grid.min;
-                    auto y_coord = (j * this->y_grid.step) + this->y_grid.min;
-                    auto z_coord = (k * this->z_grid.step) + this->z_grid.min;
+    for (auto i = 0; i < this->x_grid_.size; i++) {
+        for (auto j = 0; j < this->y_grid_.size; j++) {
+            for (auto k = 0; k < this->z_grid_.size; k++) {
+                if (this->field_[i][j][k][0] + this->field_[i][j][k][1] + this->field_[i][j][k][2] >= big_value) {
+                    auto x_coord = (i * this->x_grid_.step) + this->x_grid_.min;
+                    auto y_coord = (j * this->y_grid_.step) + this->y_grid_.min;
+                    auto z_coord = (k * this->z_grid_.step) + this->z_grid_.min;
 
                     missed_points.push_back({x_coord, y_coord, z_coord});
-                    this->field[i][j][k] = {0., 0., 0.};
+                    this->field_[i][j][k] = {0., 0., 0.};
                 }
             }
         }

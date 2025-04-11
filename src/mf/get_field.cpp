@@ -1,5 +1,7 @@
-#include "MF.hpp"
-#include "Interpolation.hpp"
+#include <cmath>
+
+#include "mf/MF.hpp"
+#include "interpolation/Interpolation.hpp"
 
 /**
  * @param x - x coordinate in absolute values
@@ -40,34 +42,34 @@ std::tuple<uint, uint, double> find_nodes(const double &x, const Grid &grid) {
 std::array<double, 3> MagneticField::get_field(const std::tuple<double, double, double> &coords) {
     auto [x, y, z] = coords;
 
-    auto [x_left, x_right, x_delta] = find_nodes(x, this->x_grid);
-    auto [y_left, y_right, y_delta] = find_nodes(y, this->y_grid);
-    auto [z_left, z_right, z_delta] = find_nodes(z, this->z_grid);
+    auto [x_left, x_right, x_delta] = find_nodes(x, this->x_grid_);
+    auto [y_left, y_right, y_delta] = find_nodes(y, this->y_grid_);
+    auto [z_left, z_right, z_delta] = find_nodes(z, this->z_grid_);
 
     if (x_left == x_right) {
         if (y_left == y_right) {
             if (z_left == z_right) {
-                return this->field[x_left][y_left][z_left];
+                return this->field_[x_left][y_left][z_left];
             } else {
                 return linear_1d(
-                    this->field[x_left][y_left][z_left], 
-                    this->field[x_left][y_left][z_right], 
+                    this->field_[x_left][y_left][z_left], 
+                    this->field_[x_left][y_left][z_right], 
                     z_delta
                     );
             }
         } else {
             if (z_left == z_right) {
                 return linear_1d(
-                    this->field[x_left][y_left][z_left], 
-                    this->field[x_left][y_right][z_left], 
+                    this->field_[x_left][y_left][z_left], 
+                    this->field_[x_left][y_right][z_left], 
                     y_delta
                     );
             } else {
                 return linear_2d(
-                    this->field[x_left][y_left][z_left],
-                    this->field[x_left][y_left][z_right],
-                    this->field[x_left][y_right][z_left],
-                    this->field[x_left][y_right][z_right],
+                    this->field_[x_left][y_left][z_left],
+                    this->field_[x_left][y_left][z_right],
+                    this->field_[x_left][y_right][z_left],
+                    this->field_[x_left][y_right][z_right],
                     y_delta,
                     z_delta
                 );
@@ -77,16 +79,16 @@ std::array<double, 3> MagneticField::get_field(const std::tuple<double, double, 
         if (y_left == y_right) {
             if (z_left == z_right) {
                 return linear_1d(
-                    this->field[x_left][y_left][z_left], 
-                    this->field[x_right][y_left][z_left], 
+                    this->field_[x_left][y_left][z_left], 
+                    this->field_[x_right][y_left][z_left], 
                     x_delta
                     );
             } else {
                 return linear_2d(
-                    this->field[x_left][y_left][z_left],
-                    this->field[x_left][y_left][z_right],
-                    this->field[x_right][y_left][z_left],
-                    this->field[x_right][y_left][z_right],
+                    this->field_[x_left][y_left][z_left],
+                    this->field_[x_left][y_left][z_right],
+                    this->field_[x_right][y_left][z_left],
+                    this->field_[x_right][y_left][z_right],
                     x_delta,
                     z_delta
                 );
@@ -94,23 +96,23 @@ std::array<double, 3> MagneticField::get_field(const std::tuple<double, double, 
         } else {
             if (z_left == z_right) {
                 return linear_2d(
-                    this->field[x_left][y_left][z_left],
-                    this->field[x_left][y_right][z_left],
-                    this->field[x_right][y_left][z_left],
-                    this->field[x_right][y_right][z_left],
+                    this->field_[x_left][y_left][z_left],
+                    this->field_[x_left][y_right][z_left],
+                    this->field_[x_right][y_left][z_left],
+                    this->field_[x_right][y_right][z_left],
                     x_delta,
                     y_delta
                 );
             } else {
                 return linear_3d(
-                    this->field[x_left][y_left][z_left],
-                    this->field[x_left][y_left][z_right],
-                    this->field[x_left][y_right][z_left],
-                    this->field[x_left][y_right][z_right],
-                    this->field[x_right][y_left][z_left],
-                    this->field[x_right][y_left][z_right],
-                    this->field[x_right][y_right][z_left],
-                    this->field[x_right][y_right][z_right],
+                    this->field_[x_left][y_left][z_left],
+                    this->field_[x_left][y_left][z_right],
+                    this->field_[x_left][y_right][z_left],
+                    this->field_[x_left][y_right][z_right],
+                    this->field_[x_right][y_left][z_left],
+                    this->field_[x_right][y_left][z_right],
+                    this->field_[x_right][y_right][z_left],
+                    this->field_[x_right][y_right][z_right],
                     x_delta,
                     y_delta,
                     z_delta
