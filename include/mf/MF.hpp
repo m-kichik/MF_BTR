@@ -23,17 +23,14 @@ struct Grid {
     std::vector<double> grid;
 };
 
-
 struct RawMFData {
     std::vector<std::vector<double>> field_data;
     std::vector<uint> corrupted_lines;
 };
 
-
 using FieldCell = std::array<double, 3>;
 using FieldLayer = std::vector<std::vector<FieldCell>>;
 using Field3D = std::vector<FieldLayer>;
-
 
 class MagneticField {
     public:
@@ -58,6 +55,7 @@ class MagneticField {
         std::tuple<bool, bool, bool> define_grid(
             std::vector<std::vector<double>> raw_mf
             );
+        void init_grid(Grid& grid, const std::vector<double>& values);
         std::vector<std::vector<double>> fill_field(std::vector<std::vector<double>> raw_mf);
 
         Field3D field_;
@@ -80,4 +78,8 @@ class MagneticField {
         MagneticField& operator=(const MagneticField&) = delete;
         MagneticField(MagneticField&&) = default;
         MagneticField& operator=(MagneticField&&) = default;
+};
+
+class FieldReadError : public std::runtime_error {
+    using std::runtime_error::runtime_error;
 };
